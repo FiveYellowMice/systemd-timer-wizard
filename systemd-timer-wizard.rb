@@ -96,6 +96,7 @@ settings = {
   exec_start:                nil,
   service_user:              nil,
   service_working_directory: nil,
+  service_wanted_by:         nil,
   timer_type:                nil,
   on_boot_sec:               nil,
   on_unit_active_sec:        nil,
@@ -308,6 +309,35 @@ end
 ########################
 
 print_seperator
+puts "Type the unit that will 'want' this service, press enter if you don't want one:"
+
+Readline.completion_proc = completion_systemd_units
+Readline.completion_append_character = ''
+
+loop do
+  input = Readline.readline('> ', true)
+
+  service_wanted_by = input.strip
+
+  if service_wanted_by.empty?
+    puts "Service will not have an [Install] section."
+    settings[:service_wanted_by] = nil
+    break
+  end
+
+  if !get_systemd_units.include?(service_wanted_by)
+    puts "Unit '#{service_wanted_by}' does not exist."
+    next
+  end
+
+  puts "The service will be wanted by '#{service_wanted_by}'."
+  settings[:service_wanted_by] = service_wanted_by
+  break
+end
+
+########################
+
+print_seperator
 puts "Select timer type:"
 puts "(1) monotonic"
 puts "(2) realtime"
@@ -472,36 +502,6 @@ end
 
 ########################
 
-########################
-
-print_seperator
-puts "Type the unit that will 'want' this service:"
-puts "(Default is 'multi-user.target')"
-
-Readline.completion_proc = completion_systemd_units
-Readline.completion_append_character = ''
-
-loop do
-  input = Readline.readline('> ', true)
-
-  service_wanted_by = input.strip
-
-  if service_wanted_by.empty?
-    service_wanted_by = 'multi-user.target'
-  end
-
-  if !get_systemd_units.include?(service_wanted_by)
-    puts "Unit '#{service_wanted_by}' does not exist."
-    next
-  end
-
-  puts "The service will be wanted by '#{service_wanted_by}'."
-  settings[:service_wanted_by] = service_wanted_by
-  break
-end
-
-########################
-
 print_seperator
 puts "OK, all questions have been completed.\n"
 
@@ -518,8 +518,10 @@ if settings[:service_working_directory]
   service_file_content += "WorkingDirectory=#{settings[:service_working_directory]}\n"
 end
 service_file_content += "ExecStart=#{settings[:exec_start]}\n"
-service_file_content += "\n[Install]\n"
-service_file_content += "WantedBy=#{settings[:service_wanted_by]}\n"
+if settings[:service_wanted_by]
+  service_file_content += "\n[Install]\n"
+  service_file_content += "WantedBy=#{settings[:service_wanted_by]}\n"
+end
 
 timer_file_name   = File.expand_path(settings[:unit_name] + '.timer'  , settings[:save_directory])
 timer_file_content = "[Unit]\n"
