@@ -50,35 +50,35 @@ completion_none = proc do |s|
 end
 
 module SystemdTime
-  
+
   weekday = "(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)"
   weekdays = "(?:#{weekday}(?:(?:,|\\.\\.)#{weekday})*)"
-  
+
   year = "(?:\\d+)"
   years = "(?:#{year}(?:(?:,|\\.\\.|/)#{year})*|\\*)"
-  
+
   month = "(?:0?[1-9]|1[0-2])"
   months = "(?:#{month}(?:(?:,|\\.\\.|/)#{month})*|\\*)"
-  
+
   day = "(?:0?[1-9]|[12][0-9]|3[0-1])"
   days = "(?:#{day}(?:(?:,|\\.\\.|/)#{day})*|\\*)"
-  
+
   hour = "(?:[01]?[0-9]|2[0-3])"
   hours = "(?:#{hour}(?:(?:,|\\.\\.|/)#{hour})*|\\*)"
-  
+
   minute = "(?:[0-5]?[0-9])"
   minutes = "(?:#{minute}(?:(?:,|\\.\\.|/)#{minute})*|\\*)"
-  
+
   second = "(?:[0-5]?[0-9](?:\\.[0-9]+)?)"
   seconds = "(?:#{second}(?:(?:,|\\.\\.|/)#{second})*|\\*)"
-  
+
   date = "(?:#{years}-#{months}-#{days})"
   time = "(?:#{hours}:#{minutes}(?::#{seconds})?)"
-  
+
   all = %r[\A(?:#{weekdays} )?(?:#{date}(?: #{time})?|#{time})\z]i
-  
+
   REGEXP = all
-  
+
 end
 
 ########################
@@ -115,30 +115,30 @@ Readline.completion_append_character = ''
 
 loop do
   input = Readline.readline('> ', true)
-  
+
   if input.empty?
     save_directory = '/etc/systemd/system'
   else
     save_directory = input.strip.sub(/\/+$/, '')
   end
-  
+
   save_directory = File.expand_path(save_directory, Dir.pwd)
-  
+
   if !File.exist?(save_directory)
     puts "'#{save_directory}' does not exist."
     next
   end
-  
+
   if !File.directory?(save_directory)
     puts "'#{save_directory}' is not a directory."
     next
   end
-  
+
   if !File.writable?(save_directory)
     puts "You don't have write permission to '#{save_directory}'."
     next
   end
-  
+
   puts "Will save files to '#{save_directory}'."
   settings[:save_directory] = save_directory
   break
@@ -155,22 +155,22 @@ Readline.completion_append_character = ''
 loop do
   input = Readline.readline('> ', true)
   unit_name = input.strip
-  
+
   if unit_name.empty?
     puts "You have to choose a name for your timer."
     next
   end
-  
+
   if !(unit_name =~ /\A[a-z0-9-]+\z/)
     puts "Unit names can only contain lower case ASCII letters, numbers and hyphens."
     next
   end
-  
+
   if %w(.service .timer).any?{|ex| File.exist?(File.expand_path(unit_name + ex, settings[:save_directory])) }
     puts "Either '#{unit_name}.service' or '#{unit_name}.timer' already exists in the specified path."
     next
   end
-  
+
   puts "Timer will be saved as '#{unit_name}.service' and '#{unit_name}.timer'."
   settings[:unit_name] = unit_name
   break
@@ -187,7 +187,7 @@ Readline.completion_append_character = ' '
 loop do
   input = Readline.readline('> ', true)
   service_description = input.strip
-  
+
   if service_description.empty?
     puts "Service will not have a description."
     settings[:service_description] = nil
@@ -210,7 +210,7 @@ Readline.completion_append_character = ' '
 loop do
   input = Readline.readline('> ', true)
   timer_description = input.strip
-  
+
   if timer_description.empty?
     puts "Timer will not have a description."
     settings[:timer_description] = nil
@@ -233,12 +233,12 @@ Readline.completion_append_character = ''
 loop do
   input = Readline.readline('> ', true)
   exec_start = input.strip
-  
+
   if exec_start.empty?
     puts "Command can not be empty."
     next
   end
-  
+
   puts "ExecStart has been set."
   settings[:exec_start] = exec_start
   break
@@ -255,18 +255,18 @@ Readline.completion_append_character = ''
 loop do
   input = Readline.readline('> ', true)
   service_user = input.strip
-  
+
   if service_user.empty?
     puts "Service will be run as the default user."
     settings[:service_user] = nil
     break
   end
-  
+
   if !get_unix_users.include?(service_user)
     puts "User '#{service_user}' does not exist."
     next
   end
-  
+
   puts "Service will be run as #{service_user}."
   settings[:service_user] = service_user
   break
@@ -283,23 +283,23 @@ Readline.completion_append_character = ''
 loop do
   input = Readline.readline('> ', true)
   service_working_directory = input.strip.sub(/\/+$/, '')
-  
+
   if service_working_directory.empty?
     puts "Working directory will not be set."
     settings[:service_working_directory] = nil
     break
   end
-  
+
   if !File.exist?(service_working_directory)
     puts "'#{service_working_directory}' does not exist."
     next
   end
-  
+
   if !File.directory?(service_working_directory)
     puts "'#{service_working_directory}' is not a directory."
     next
   end
-  
+
   puts "Service will be run under #{service_working_directory ? "'#{service_working_directory}'" : 'the default working directory'}."
   settings[:service_working_directory] = service_working_directory
   break
@@ -317,14 +317,14 @@ Readline.completion_append_character = ''
 
 loop do
   input = Readline.readline('Your selection (1/2): ', false)
-  
+
   timer_type = [nil, :monotonic, :realtime][input.to_i]
-  
+
   if !timer_type
     puts "You have to choose a timer type."
     next
   end
-  
+
   puts "Timer will be #{timer_type}."
   settings[:timer_type] = timer_type
   break
@@ -333,100 +333,100 @@ end
 ########################
 
 if settings[:timer_type] == :monotonic
-  
+
   print_seperator
   puts "Type the time for the unit to activate after boot:"
-  
+
   Readline.completion_proc = completion_systemd_time
   Readline.completion_append_character = ' '
-  
+
   loop do
     input = Readline.readline('> ', true)
-    
+
     on_boot_sec = input.strip
-    
+
     if on_boot_sec.empty?
       puts "Time can not be empty."
       next
     end
-    
+
     puts "Unit will be activated by timer #{on_boot_sec} after boot."
     settings[:on_boot_sec] = on_boot_sec
     break
   end
-  
+
 end
 
 ########################
 
 if settings[:timer_type] == :monotonic
-  
+
   print_seperator
   puts "Type the time gap between each activation:"
-  
+
   Readline.completion_proc = completion_systemd_time
   Readline.completion_append_character = ' '
-  
+
   loop do
     input = Readline.readline('> ', true)
-    
+
     on_unit_active_sec = input.strip
-    
+
     if on_unit_active_sec.empty?
       puts "Time can not be empty."
       next
     end
-    
+
     puts "Unit will be activated by timer each #{on_unit_active_sec}."
     settings[:on_unit_active_sec] = on_unit_active_sec
     break
   end
-  
+
 end
 
 ########################
 
 if settings[:timer_type] == :realtime
-  
+
   print_seperator
   puts "Type the calendar expression of the timer:"
   puts "(See 'man 7 systemd.time' for help)"
-  
+
   Readline.completion_proc = completion_none
   Readline.completion_append_character = ''
-  
+
   loop do
     input = Readline.readline('> ', true)
-    
+
     on_calendar = input.strip
-    
+
     if !(on_calendar =~ SystemdTime::REGEXP)
       puts "Invalid calendar expression."
       next
     end
-    
+
     puts "Unit will be activated by timer each #{on_calendar}."
     settings[:on_calendar] = on_calendar
     break
   end
-  
+
 end
 
 ########################
 
 if settings[:timer_type] == :realtime
-  
+
   print_seperator
   puts "Do you want the timer to be persistent?"
-  
+
   Readline.completion_proc = completion_none
   Readline.completion_append_character = ''
-  
+
   loop do
     input = Readline.readline('(y/n): ', false)
-    
+
     timer_persistent = input.strip.downcase
-    
+
     if timer_persistent == 'y'
       puts "Timer will be persistent."
       settings[:timer_persistent] = true
@@ -439,7 +439,7 @@ if settings[:timer_type] == :realtime
       puts "Please type 'y' or 'n'."
     end
   end
-  
+
 end
 
 ########################
@@ -453,20 +453,50 @@ Readline.completion_append_character = ''
 
 loop do
   input = Readline.readline('> ', true)
-  
+
   timer_wanted_by = input.strip
-  
+
   if timer_wanted_by.empty?
     timer_wanted_by = 'multi-user.target'
   end
-  
+
   if !get_systemd_units.include?(timer_wanted_by)
     puts "Unit '#{timer_wanted_by}' does not exist."
     next
   end
-  
+
   puts "The timer will be wanted by '#{timer_wanted_by}'."
   settings[:timer_wanted_by] = timer_wanted_by
+  break
+end
+
+########################
+
+########################
+
+print_seperator
+puts "Type the unit that will 'want' this service:"
+puts "(Default is 'multi-user.target')"
+
+Readline.completion_proc = completion_systemd_units
+Readline.completion_append_character = ''
+
+loop do
+  input = Readline.readline('> ', true)
+
+  service_wanted_by = input.strip
+
+  if service_wanted_by.empty?
+    service_wanted_by = 'multi-user.target'
+  end
+
+  if !get_systemd_units.include?(service_wanted_by)
+    puts "Unit '#{service_wanted_by}' does not exist."
+    next
+  end
+
+  puts "The service will be wanted by '#{service_wanted_by}'."
+  settings[:service_wanted_by] = service_wanted_by
   break
 end
 
@@ -488,6 +518,8 @@ if settings[:service_working_directory]
   service_file_content += "WorkingDirectory=#{settings[:service_working_directory]}\n"
 end
 service_file_content += "ExecStart=#{settings[:exec_start]}\n"
+service_file_content += "\n[Install]\n"
+service_file_content += "WantedBy=#{settings[:service_wanted_by]}\n"
 
 timer_file_name   = File.expand_path(settings[:unit_name] + '.timer'  , settings[:save_directory])
 timer_file_content = "[Unit]\n"
